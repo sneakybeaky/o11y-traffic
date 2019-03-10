@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var directory string
+var glob string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -18,19 +18,15 @@ var rootCmd = &cobra.Command{
 expression to feed into vegeta`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return fmt.Errorf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
-			}
-
-			if !info.IsDir() {
-				fmt.Printf("visited file: %q\n", path)
-			}
-			return nil
-		})
+		matches, err := filepath.Glob(glob)
 		if err != nil {
-			return fmt.Errorf("error walking the path %q: %v\n", directory, err)
+			return err
 		}
+
+		for _, match := range matches {
+			fmt.Printf("Found a matching file at %s\n", match)
+		}
+
 		return nil
 	},
 }
@@ -46,6 +42,6 @@ func Execute() {
 
 func init() {
 
-	rootCmd.Flags().StringVarP(&directory, "directory", "d", "", "Directory to walk")
-	rootCmd.MarkFlagRequired("directory")
+	rootCmd.Flags().StringVarP(&glob, "glob", "g", "", "Glob to match")
+	rootCmd.MarkFlagRequired("glob")
 }
