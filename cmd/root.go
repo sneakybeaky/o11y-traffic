@@ -1,12 +1,25 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"mime"
+	"mime/multipart"
+	"net/http"
+	"net/textproto"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/tsenart/vegeta/lib"
 )
+
+func init() {
+	mime.AddExtensionType(".jpeg", "image/jpeg")
+	mime.AddExtensionType(".tiff", "image/tiff")
+	mime.AddExtensionType(".tif", "image/tiff")
+}
 
 var dir string
 
@@ -30,7 +43,19 @@ expression to feed into vegeta`,
 					return fmt.Errorf("unable to get absolute path for %q", path)
 				}
 
-				fmt.Printf("visited file or dir: %q\n", abspath)
+				target, err := asTarget(abspath)
+				if err != nil {
+					return err
+				}
+
+				var buf bytes.Buffer
+				enc := vegeta.NewJSONTargetEncoder(&buf)
+				err = enc.Encode(target)
+
+				if err != nil {
+					return err
+				}
+				fmt.Printf("%s\n", string(buf.Bytes()))
 
 			}
 			return nil
@@ -42,6 +67,49 @@ expression to feed into vegeta`,
 
 		return nil
 	},
+}
+
+func asTarget(path string) (*vegeta.Target, error) {
+
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreatePart(createFormFile("file", filepath.Base(path)))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+
+	writer.WriteField("name", "blahblah")
+
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	target := vegeta.Target{
+		Method: "POST",
+		URL:    "http://localhost:8080/api/images",
+		Header: http.Header{"Content-Type": []string{writer.FormDataContentType()}},
+		Body:   []byte(body.Bytes()),
+	}
+
+	return &target, nil
+
+}
+
+func createFormFile(fieldname, filename string) textproto.MIMEHeader {
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition",
+		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+			fieldname, filename))
+	h.Set("Content-Type", mime.TypeByExtension(filepath.Ext(filename)))
+	return h
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
