@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	randomdata "github.com/Pallinder/go-randomdata"
 	"github.com/spf13/cobra"
 	"github.com/tsenart/vegeta/lib"
 )
@@ -85,7 +86,7 @@ func asTarget(path string) (*vegeta.Target, error) {
 	}
 	_, err = io.Copy(part, file)
 
-	writer.WriteField("name", "blahblah")
+	writer.WriteField("name", fmt.Sprintf("%s %s %s", randomdata.Adjective(), randomdata.Noun(), randomdata.FullDate()))
 
 	err = writer.Close()
 	if err != nil {
