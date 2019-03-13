@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	randomdata "github.com/Pallinder/go-randomdata"
+	"github.com/Pallinder/go-randomdata"
 	"github.com/spf13/cobra"
 	"github.com/tsenart/vegeta/lib"
 )
@@ -32,42 +32,75 @@ var rootCmd = &cobra.Command{
 expression to feed into vegeta`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if !info.IsDir() {
-				abspath, err := filepath.Abs(path)
-
-				if err != nil {
-					return fmt.Errorf("unable to get absolute path for %q", path)
-				}
-
-				target, err := asTarget(abspath)
-				if err != nil {
-					return err
-				}
-
-				var buf bytes.Buffer
-				enc := vegeta.NewJSONTargetEncoder(&buf)
-				err = enc.Encode(target)
-
-				if err != nil {
-					return err
-				}
-				fmt.Printf("%s\n", string(buf.Bytes()))
-
-			}
-			return nil
-		})
+		found, err := findImages(dir)
 
 		if err != nil {
-			return fmt.Errorf("error walking the path %q: %v\n", dir, err)
+			return fmt.Errorf("unable to find images: %v\n", dir, err)
 		}
+
+		asTargets(found)
 
 		return nil
 	},
+}
+
+func asTargets(paths []string) {
+
+	var buf bytes.Buffer
+	enc := vegeta.NewJSONTargetEncoder(&buf)
+
+	for _, path := range paths {
+
+		target, err := asTarget(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to process %q : %v", path, err)
+			break
+		}
+
+		err = enc.Encode(target)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to encode %q : %v", path, err)
+			break
+		}
+		fmt.Fprintf(os.Stdout, "%s\n", string(buf.Bytes()))
+		buf.Reset()
+
+	}
+
+}
+
+func findImages(dir string) ([]string, error) {
+
+	var found []string
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		abspath, err := filepath.Abs(path)
+
+		if err != nil {
+			return fmt.Errorf("unable to get absolute path for %q", path)
+		}
+
+		found = append(found, abspath)
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return found, nil
+
 }
 
 func asTarget(path string) (*vegeta.Target, error) {
