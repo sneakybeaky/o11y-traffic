@@ -21,9 +21,13 @@ import (
 func init() {
 	rootCmd.Flags().StringVarP(&dir, "directory", "d", "", "Directory to walk")
 	rootCmd.MarkFlagRequired("directory")
+
+	rootCmd.Flags().BoolVarP(&forever, "forever", "f", true, "Run forever")
+
 }
 
 var dir string
+var forever bool
 
 var types = map[string]string{
 	".jpeg": "image/jpeg",
@@ -57,8 +61,14 @@ expression to feed into vegeta`,
 			return fmt.Errorf("unable to find images: %v\n", err)
 		}
 
-		shuffle(found)
-		asTargets(found)
+		for {
+			shuffle(found)
+			asTargets(found)
+
+			if !forever {
+				break
+			}
+		}
 
 		return nil
 	},
