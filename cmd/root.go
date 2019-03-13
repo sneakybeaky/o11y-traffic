@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/spf13/cobra"
@@ -55,6 +57,7 @@ expression to feed into vegeta`,
 			return fmt.Errorf("unable to find images: %v\n", err)
 		}
 
+		shuffle(found)
 		asTargets(found)
 
 		return nil
@@ -170,6 +173,16 @@ func createFormFile(fieldname, filename string) textproto.MIMEHeader {
 			fieldname, filename))
 	h.Set("Content-Type", mime.TypeByExtension(filepath.Ext(filename)))
 	return h
+}
+
+func shuffle(vals []string) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	for len(vals) > 0 {
+		n := len(vals)
+		randIndex := r.Intn(n)
+		vals[n-1], vals[randIndex] = vals[randIndex], vals[n-1]
+		vals = vals[:n-1]
+	}
 }
 
 func Execute() {
