@@ -17,12 +17,21 @@ import (
 )
 
 func init() {
-	mime.AddExtensionType(".jpeg", "image/jpeg")
-	mime.AddExtensionType(".tiff", "image/tiff")
-	mime.AddExtensionType(".tif", "image/tiff")
+	rootCmd.Flags().StringVarP(&dir, "directory", "d", "", "Directory to walk")
+	rootCmd.MarkFlagRequired("directory")
 }
 
 var dir string
+
+var types = map[string]string{
+	".jpeg": "image/jpeg",
+	".tiff": "image/tiff",
+	".tif":  "image/tiff",
+	".gif":  "image/gif",
+	".jpg":  "image/jpeg",
+	".png":  "image/png",
+	".svg":  "image/svg+xml",
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -32,10 +41,18 @@ var rootCmd = &cobra.Command{
 expression to feed into vegeta`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
+		for ext, mimeType := range types {
+			err := mime.AddExtensionType(ext, mimeType)
+
+			if err != nil {
+				return fmt.Errorf("unable to setup mime types: %v\n", err)
+			}
+		}
+
 		found, err := findImages(dir)
 
 		if err != nil {
-			return fmt.Errorf("unable to find images: %v\n", dir, err)
+			return fmt.Errorf("unable to find images: %v\n", err)
 		}
 
 		asTargets(found)
@@ -84,6 +101,10 @@ func findImages(dir string) ([]string, error) {
 			return nil
 		}
 
+		if isImage := isImageFile(path); !isImage {
+			return nil
+		}
+
 		abspath, err := filepath.Abs(path)
 
 		if err != nil {
@@ -101,6 +122,11 @@ func findImages(dir string) ([]string, error) {
 
 	return found, nil
 
+}
+
+func isImageFile(path string) bool {
+	_, ok := types[filepath.Ext(path)]
+	return ok
 }
 
 func asTarget(path string) (*vegeta.Target, error) {
@@ -146,17 +172,9 @@ func createFormFile(fieldname, filename string) textproto.MIMEHeader {
 	return h
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func init() {
-
-	rootCmd.Flags().StringVarP(&dir, "directory", "d", "", "Directory to walk")
-	rootCmd.MarkFlagRequired("directory")
 }
