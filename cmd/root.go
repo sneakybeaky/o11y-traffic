@@ -18,14 +18,6 @@ import (
 	"github.com/tsenart/vegeta/lib"
 )
 
-func init() {
-	rootCmd.Flags().StringVarP(&dir, "directory", "d", "", "Directory to walk")
-	rootCmd.MarkFlagRequired("directory")
-
-	rootCmd.Flags().BoolVarP(&forever, "forever", "f", true, "Run forever")
-
-}
-
 var dir string
 var forever bool
 
@@ -69,7 +61,6 @@ expression to feed into vegeta`,
 				break
 			}
 		}
-
 		return nil
 	},
 }
@@ -196,6 +187,11 @@ func shuffle(vals []string) {
 }
 
 func Execute() {
+
+	rootCmd.Flags().StringVarP(&dir, "directory", "d", "", "Directory to walk")
+	rootCmd.MarkFlagRequired("directory")
+
+	rootCmd.Flags().BoolVarP(&forever, "forever", "f", true, "Run forever")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
