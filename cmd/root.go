@@ -193,7 +193,7 @@ func Execute() {
 
 	rootCmd.Flags().BoolVarP(&forever, "forever", "f", true, "Run forever")
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
