@@ -18,7 +18,7 @@ import (
 	"github.com/tsenart/vegeta/lib"
 )
 
-var dir string
+var dir, url  string
 var forever bool
 
 var types = map[string]string{
@@ -33,10 +33,9 @@ var types = map[string]string{
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "walker",
-	Short: "Generates vegeta friendly test data",
-	Long: `Walks a directory tree matching files against a supplied regex
-expression to feed into vegeta`,
+	Use:   "imggen",
+	Short: "o11y workshop image data generator",
+	Long: "generate a stream of image data for vegeta. Walks a directory looking for image files to upload",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		for ext, mimeType := range types {
@@ -158,7 +157,7 @@ func asTarget(path string) (*vegeta.Target, error) {
 
 	target := vegeta.Target{
 		Method: "POST",
-		URL:    "http://localhost:8080/api/images",
+		URL:    url,
 		Header: http.Header{"Content-Type": []string{writer.FormDataContentType()}},
 		Body:   []byte(body.Bytes()),
 	}
@@ -192,6 +191,9 @@ func Execute() {
 	rootCmd.MarkFlagRequired("directory")
 
 	rootCmd.Flags().BoolVarP(&forever, "forever", "f", true, "Run forever")
+	rootCmd.Flags().StringVarP(&url,"url","u","http://localhost:8080/api/images","URL to POST form data to")
+
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
