@@ -8,20 +8,11 @@ For each image file found a POST request with a mulitpart body consisting of
 - `name` : a randomized string
 
 
-
-## Running
-
-You need go installed and GOBIN in your PATH. Once that is done, run the command:
-
-```shell
-$ go run main.go
-```
-
 ## Usage manual
 
 ```console
 Usage:
-  imggen [flags]
+  o11y-traffic [flags]
 
 Flags:
   -d, --directory string   Directory to walk
@@ -67,7 +58,7 @@ You will need to [install vegeta](https://github.com/tsenart/vegeta/blob/master/
 To find all images under `~/tmp/jpg` and send to `http://localhost:8080/api/images` at a rate of 1 per second for 30 seconds :
 
 ```console
-go run main.go -d ~/tmp/jpg | \
+o11y-traffic -d ~/tmp/jpg | \
   vegeta attack -rate=1/s -lazy -format=json -duration=30s | \
   tee results.bin | \
   vegeta report
