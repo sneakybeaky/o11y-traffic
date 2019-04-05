@@ -2,3 +2,4 @@
 .idea
 dist
 results.bin
+.DS_Store
