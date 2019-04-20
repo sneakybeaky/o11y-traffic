@@ -33,7 +33,7 @@ var types = map[string]string{
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "imggen",
+	Use:   "o11y-traffic",
 	Short: "o11y workshop image data generator",
 	Long:  "generate a stream of image data for vegeta. Walks a directory looking for image files to upload",
 	RunE: func(cmd *cobra.Command, args []string) error {
