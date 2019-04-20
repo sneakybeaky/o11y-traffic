@@ -18,7 +18,7 @@ import (
 	"github.com/tsenart/vegeta/lib"
 )
 
-var dir, url  string
+var dir, url string
 var forever bool
 
 var types = map[string]string{
@@ -35,7 +35,7 @@ var types = map[string]string{
 var rootCmd = &cobra.Command{
 	Use:   "imggen",
 	Short: "o11y workshop image data generator",
-	Long: "generate a stream of image data for vegeta. Walks a directory looking for image files to upload",
+	Long:  "generate a stream of image data for vegeta. Walks a directory looking for image files to upload",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		for ext, mimeType := range types {
@@ -142,7 +142,7 @@ func asTarget(path string) (*vegeta.Target, error) {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreatePart(createFormFile("file", filepath.Base(path)))
+	part, err := writer.CreatePart(createFormFile("image", filepath.Base(path)))
 	if err != nil {
 		return nil, err
 	}
@@ -191,8 +191,7 @@ func Execute() {
 	rootCmd.MarkFlagRequired("directory")
 
 	rootCmd.Flags().BoolVarP(&forever, "forever", "f", true, "Run forever")
-	rootCmd.Flags().StringVarP(&url,"url","u","http://localhost:8080/api/images","URL to POST form data to")
-
+	rootCmd.Flags().StringVarP(&url, "url", "u", "http://localhost:8080/api/images", "URL to POST form data to")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
